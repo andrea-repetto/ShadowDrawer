@@ -15,7 +15,8 @@ Shader "Custom/ShadowDrawer"
 
     struct v2f_shadow {
         float4 pos : SV_POSITION;
-        LIGHTING_COORDS(0, 1)
+        float3 worldPos : TEXCOORD0;
+        UNITY_LIGHTING_COORDS(1, 2)
     };
 
     half4 _Color;
@@ -23,14 +24,15 @@ Shader "Custom/ShadowDrawer"
     v2f_shadow vert_shadow(appdata_full v)
     {
         v2f_shadow o;
-        o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
-        TRANSFER_VERTEX_TO_FRAGMENT(o);
+        o.pos = UnityObjectToClipPos(v.vertex);
+        o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+        UNITY_TRANSFER_LIGHTING(o, v.texcoord1);
         return o;
     }
 
     half4 frag_shadow(v2f_shadow IN) : SV_Target
     {
-        half atten = LIGHT_ATTENUATION(IN);
+        UNITY_LIGHT_ATTENUATION(atten, IN, IN.worldPos);
         return half4(_Color.rgb, lerp(_Color.a, 0, atten));
     }
 
@@ -57,7 +59,7 @@ Shader "Custom/ShadowDrawer"
             v2f vert(appdata_full v)
             {
                 v2f o;
-                o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+                o.pos = UnityObjectToClipPos(v.vertex);
                 return o;
             }
 
